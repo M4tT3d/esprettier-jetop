@@ -8,75 +8,76 @@ const eslintrc = require("../assets/eslintrc.json")
 const prettierrc = require("../assets/prettierrc.json")
 
 const argv = process.argv
-let packages = [
-  "eslint-config-next@latest",
-  "eslint-config-prettier@latest",
-  "eslint-plugin-import@latest",
-  "eslint-plugin-prettier@latest",
-  "eslint-plugin-tailwindcss@latest",
-  "prettier@latest",
-]
+let packages = {
+  tailwindCSS: ["tailwindcss", "postcss", "autoprefixer", "eslint-plugin-tailwindcss"],
+  eslint: ["eslint-config-next", "eslint-config-prettier", "eslint-plugin-prettier", "prettier"],
+  typescript: ["typescript", "@types/react", "@types/node"],
+  airbnb: [
+    "eslint",
+    "eslint-plugin-import",
+    "eslint-plugin-jsx-a11y",
+    "eslint-plugin-react",
+    "eslint-plugin-react-hooks",
+    "eslint-config-airbnb",
+  ],
+}
 
 const questions = [
   {
     type: "confirm",
     name: "tailwindCSS",
-    message: "Will you use TailwindCSS? (y)",
-    default: "y",
-    validate(val) {
-      if (val !== "y" || val !== "n") {
-        return "Please enter y or n"
-      }
-      return val
-    },
+    message: "Do you use TailwindCSS?",
+    default: true,
   },
   {
     type: "confirm",
     name: "nextJS",
-    message: "Do you use nextJS? (y)",
-    default: "y",
-    validate(val) {
-      if (val !== "y" || val !== "n") {
-        return "Please enter y or n"
-      }
-      return val
-    },
+    message: "Do you use nextJS?",
+    default: true,
   },
   {
     type: "confirm",
-    name: "typescript",
-    message: "Do you use Typescript? (y)",
-    default: "y",
-    validate(val) {
-      if (val !== "y" || val !== "n") {
-        return "Please enter y or n"
-      }
-      return val
-    },
+    name: "husky",
+    message: "Do you want to auto format code before commit?",
+    default: true,
   },
 ]
 
-if (argv.length <= 2) {
+if (argv.length > 3 || argv.length <= 2) {
   console.error("Insert only project path as param")
   process.exit(1)
 } else {
   const projectPath = path.resolve(argv[2])
   inquirer.prompt(questions).then((answers) => {
-    console.log("npx install-peerdeps --dev eslint-config-airbnb")
-    if (answers.tailwindCSS) {
-      console.log(`npm i -D --prefix ${projectPath} eslint-plugin-tailwindcss@latest`)
+    console.log("Installig packages...")
+    cp.execSync(
+      `npm i -D --prefix ${projectPath} ${packages.airbnb
+        .map((e) => e.concat("@latest"))
+        .join(" ")}`
+    )
+    cp.execSync(
+      `npm i -D --prefix ${projectPath} ${packages.eslint
+        .map((e) => e.concat("@latest"))
+        .join(" ")}`
+    )
+    try {
+      fs.writeFileSync(`${projectPath}/.eslintrc.json`, JSON.stringify(eslintrc, null, "  "))
+      fs.writeFileSync(`${projectPath}/.prettierrc.json`, JSON.stringify(prettierrc, null, "  "))
+    } catch (err) {
+      console.error(err)
     }
-    console.log(`npm i -D --prefix ${projectPath} ${packages.join(" ")}`)
+    if (answers.tailwindCSS) {
+      cp.execSync(
+        `npm i -D --prefix ${projectPath} ${packages.tailwindCSS
+          .map((e) => e.concat("@latest"))
+          .join(" ")}`
+      )
+      cp.execSync(`cd ${projectPath} && npx tailwindcss init -p`)
+    }
+    if (answers.husky) {
+      let pkJSON = JSON.parse(fs.readFileSync(`${projectPath}/package.json`))
+      cp.execSync(`cd ${projectPath} && npx mrm@2 lint-staged`)
+    }
+    cp.execSync(`cd ${process.env.PWD}`)
   })
-
-  //   try {
-  //     console.log("Installig packages...")
-  //     cp.execSync(`npm i -D --prefix ${projectPath} ${packages.join(" ")}`)
-  //     fs.writeFileSync(`${projectPath}/.eslintrc.json`, JSON.stringify(eslintrc, null, "  "))
-  //     fs.writeFileSync(`${projectPath}/.prettierrc.json`, JSON.stringify(prettierrc, null, "  "))
-  //     console.log("To complete the installation, run:")
-  //     console.log("npm i -D " + packages.join(" "))
-  //   } catch (err) {
-  //     console.error(err)
-  //   }
 }
