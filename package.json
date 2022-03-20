@@ -1,0 +1,36 @@
+{
+  "name": "esprettier-jetop",
+  "version": "1.0.0",
+  "description": "ESLint and Prettier configurator",
+  "main": "index.js",
+  "bin": {
+    "esprettier": "bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "esprettify": "esprettier",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "eslint",
+    "prettier",
+    "config",
+    "linter",
+    "formatter"
+  ],
+  "author": "Matteo Tedesco",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^8.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.11.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.7",
+    "prettier": "^2.6.0"
+  },
+  "lint-staged": {
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md}": "prettier --write"
+  }
+}
