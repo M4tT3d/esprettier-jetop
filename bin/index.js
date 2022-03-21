@@ -87,7 +87,7 @@ if (argv.length > 3 || argv.length <= 2) {
       eslintrc.plugins.push("@typescript-eslint")
       eslintrc.extends.push("plugin:@typescript-eslint/recommended")
       eslintrc["parser"] = "@typescript-eslint/parser"
-      if (answers.nextJS) {
+      if (answers.nextJS && !fs.existsSync(`${projectPath}/tsconfig.json`)) {
         try {
           fs.writeFileSync(`${projectPath}/tsconfig.json`, "")
         } catch (err) {
