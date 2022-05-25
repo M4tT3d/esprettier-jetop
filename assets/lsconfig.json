@@ -1,0 +1,3 @@
+{
+  "lsConfig": "module.exports = {\n\t'*.{js,jsx,ts,tsx}': ['prettier --write', () => 'tsc -p . --noEmit', 'eslint --fix'],\n}"
+}

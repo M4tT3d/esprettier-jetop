@@ -6,12 +6,25 @@ const cp = require("child_process")
 const inquirer = require("inquirer")
 const eslintrc = require("../assets/eslintrc.json")
 const prettierrc = require("../assets/prettierrc.json")
+const lsconfig = require("../assets/lsconfig.json")
 
 const argv = process.argv
 const packages = {
   tailwindCSS: ["tailwindcss", "postcss", "autoprefixer", "eslint-plugin-tailwindcss"],
-  eslint: ["eslint-config-prettier", "eslint-plugin-prettier", "prettier"],
-  typescript: ["typescript", "@types/react", "@types/node"],
+  eslint: [
+    "eslint-config-prettier",
+    "eslint-plugin-prettier",
+    "prettier",
+    "eslint-plugin-react-hooks",
+  ],
+  typescript: [
+    "typescript",
+    "@types/react",
+    "@types/node",
+    "@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser",
+  ],
+  husky: ["husky", "lint-staged"],
   airbnb: [
     "eslint",
     "eslint-plugin-import",
@@ -20,14 +33,6 @@ const packages = {
     "eslint-plugin-react-hooks",
     "eslint-config-airbnb",
   ],
-}
-const lintStagedNoTs = {
-  "*.js": "eslint --cache --fix",
-  "*.{js,css,md}": "prettier --write",
-}
-const lintStagedTs = {
-  "*.{js,jsx,ts,tsx}": "eslint --cache --fix",
-  "*.{js,jsx,ts,tsx,css,md}": "prettier --write",
 }
 
 const questions = [
@@ -58,8 +63,7 @@ const questions = [
   {
     type: "confirm",
     name: "confirm",
-    message:
-      "This will overwrite your eslintrc, prettierrc and tsconfig files. Do you want to continue?",
+    message: "This will overwrite your eslintrc, prettierrc. Do you want to continue?",
     default: false,
   },
 ]
@@ -76,7 +80,7 @@ if (argv.length > 3 || argv.length <= 2) {
     console.log("Installig packages...")
     if (answers.nextJS) {
       if (fs.existsSync(`${projectPath}/next.config.js`)) {
-        eslintrc.extends.unshift("next/core-web-vitals")
+        eslintrc.extends.splice(2, 0, "next/core-web-vitals")
         cp.spawnSync("npm", ["i", "-D", "eslint-config-next@latest"], {
           stdio: "inherit",
           cwd: projectPath,
@@ -84,8 +88,8 @@ if (argv.length > 3 || argv.length <= 2) {
       }
     }
     if (answers.ts) {
-      eslintrc.plugins.push("@typescript-eslint")
-      eslintrc.extends.push("plugin:@typescript-eslint/recommended")
+      eslintrc.plugins.splice(0, 0, "@typescript-eslint")
+      eslintrc.extends.splice(1, 0, "plugin:@typescript-eslint/recommended")
       eslintrc["parser"] = "@typescript-eslint/parser"
       if (answers.nextJS && !fs.existsSync(`${projectPath}/tsconfig.json`)) {
         try {
@@ -94,14 +98,10 @@ if (argv.length > 3 || argv.length <= 2) {
           console.log(err)
         }
       }
-      cp.spawnSync(
-        "npm",
-        ["i", "-D", "@typescript-eslint/parser@latest", "@typescript-eslint/eslint-plugin@latest"],
-        {
-          stdio: "inherit",
-          cwd: projectPath,
-        }
-      )
+      cp.spawnSync("npm", ["i", "-D", ...packages.typescript.map((e) => e.concat("@latest"))], {
+        stdio: "inherit",
+        cwd: projectPath,
+      })
     }
     if (answers.tailwindCSS) {
       cp.spawnSync("npm", ["i", "-D", ...packages.tailwindCSS.map((e) => e.concat("@latest"))], {
@@ -115,28 +115,27 @@ if (argv.length > 3 || argv.length <= 2) {
       eslintrc.extends.push("plugin:tailwindcss/recommended")
       eslintrc.plugins.push("tailwindcss")
       eslintrc.rules["tailwindcss/classnames-order"] = 0
+      prettierrc["tailwindConfig"] = "./tailwind.config.js"
     }
     if (answers.husky) {
-      cp.spawnSync("npx", ["mrm@2", "lint-staged"], {
+      cp.spawnSync("npm", ["i", "-D", ...packages.husky.map((e) => e.concat("@latest"))], {
         stdio: "inherit",
         cwd: projectPath,
       })
-      let pkJSON = JSON.parse(fs.readFileSync(`${projectPath}/package.json`))
-      if (answers.ts) {
-        pkJSON["lint-staged"] = lintStagedTs
-      } else {
-        pkJSON["lint-staged"] = lintStagedNoTs
-      }
+      cp.spawnSync("npm", ["set-script", "prepare", "husky install"], {
+        stdio: "inherit",
+        cwd: projectPath,
+      })
+      cp.spawnSync("npm", ["run", "prepare"], {
+        stdio: "inherit",
+        cwd: projectPath,
+      })
       try {
-        fs.writeFileSync(`${projectPath}/package.json`, JSON.stringify(pkJSON, null, 2))
+        fs.writeFileSync(`${projectPath}/lint-staged.config.js`, lsconfig.lsConfig)
       } catch (err) {
-        console.log(err)
+        console.error(err)
       }
     }
-    cp.spawnSync("npm", ["i", "-D", ...packages.airbnb.map((e) => e.concat("@latest"))], {
-      stdio: "inherit",
-      cwd: projectPath,
-    })
     cp.spawnSync("npm", ["i", "-D", ...packages.eslint.map((e) => e.concat("@latest"))], {
       stdio: "inherit",
       cwd: projectPath,
@@ -147,5 +146,13 @@ if (argv.length > 3 || argv.length <= 2) {
     } catch (err) {
       console.error(err)
     }
+    cp.spawnSync("npx", ["prettier", "--write", "**/*.{js,jsx,ts,tsx,json}"], {
+      stdio: "inherit",
+      cwd: projectPath,
+    })
+    cp.spawnSync("npx", ["eslint", "--fix", "."], {
+      stdio: "inherit",
+      cwd: projectPath,
+    })
   })
 }
