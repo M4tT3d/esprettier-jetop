@@ -1,5 +1,5 @@
 {
-  "name": "esprettify-jetop",
+  "name": "@matted/esprettify",
   "version": "1.0.0",
   "description": "ESLint and Prettier configurator",
   "main": "index.js",
@@ -19,7 +19,8 @@
     "formatter"
   ],
   "author": "Matteo Tedesco",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": "M4tT3d/esprettify",
   "dependencies": {
     "inquirer": "^8.2.4"
   },
