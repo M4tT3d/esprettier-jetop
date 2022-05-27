@@ -132,6 +132,7 @@ if (argv.length > 3 || argv.length <= 2) {
       })
       try {
         fs.writeFileSync(`${projectPath}/lint-staged.config.js`, lsconfig.lsConfig)
+        fs.writeFileSync(`${projectPath}/.husky/pre-commit`, lsconfig.preCommit, { mode: 0o755 })
       } catch (err) {
         console.error(err)
       }

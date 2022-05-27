@@ -1,3 +1,4 @@
 {
-  "lsConfig": "module.exports = {\n\t'*.{js,jsx,ts,tsx}': ['prettier --write', () => 'tsc -p . --noEmit', 'eslint --fix'],\n}"
+  "lsConfig": "module.exports = {\n\t'*.{js,jsx,ts,tsx}': ['prettier --write', () => 'tsc -p . --noEmit', 'eslint --fix'],\n}",
+  "preCommit": "#!/bin/sh\n. \"$(dirname \"$0\")/_/husky.sh\"\n\nnpx lint-staged"
 }
